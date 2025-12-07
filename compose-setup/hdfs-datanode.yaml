@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: datanode
+  namespace: bigdata-pipeline
+spec:
+  serviceName: datanode
+  replicas: 3
+  selector:
+    matchLabels:
+      app: datanode
+  template:
+    metadata:
+      labels:
+        app: datanode
+    spec:
+      containers:
+        - name: datanode
+          image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+          env:
+            - name: SERVICE_PRECONDITION
+              value: "namenode:9870"
+            - name: CORE_CONF_fs_defaultFS
+              value: "hdfs://namenode:9000"
+            - name: HDFS_CONF_dfs_permissions_enabled
+              value: "false"
+            - name: HDFS_CONF_dfs_namenode_datanode_registration_ip___hostname___check
+              value: "false"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "50m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+          livenessProbe:
+            tcpSocket:
+              port: 9864
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          readinessProbe:
+            tcpSocket:
+              port: 9864
+            initialDelaySeconds: 30
+            periodSeconds: 10
+  volumeClaimTemplates:
+    - metadata:
+        name: datanode-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: datanode
+  namespace: bigdata-pipeline
+spec:
+  type: ClusterIP
+  selector:
+    app: datanode
+  ports:
+    - port: 9864
+      targetPort: 9864
+      name: http
+    - port: 9866
+      targetPort: 9866
+      name: ipc
+    - port: 9867
+      targetPort: 9867
+      name: stream
