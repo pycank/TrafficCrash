@@ -1,0 +1,9 @@
+# Combined requirements for TrafficCrash project
+# Producer dependencies
+kafka-python
+pandas
+
+# Consumer dependencies
+pyspark
+hdfs
+

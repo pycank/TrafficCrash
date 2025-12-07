@@ -1,0 +1,32 @@
+## Producer
+# To create/access pod
+kubectl run python-producer --rm -it --image=python:3.11-slim --restart=Never -n bigdata-pipeline -- bash
+
+# Install dependencies (first time)
+pip install kafka-python pandas
+
+
+# Copy python files and data
+kubectl cp producer/producer.py bigdata-pipeline/producer-runner:/tmp/producer.py
+kubectl cp producer/2022-09-06.csv bigdata-pipeline/producer-runner:/tmp/2022-09-06.csv
+
+# Run
+python /tmp/producer.py
+
+## Consumer
+# To create/access pod
+kubectl run python-consumer --rm -it --image=python:3.11-slim --restart=Never -n bigdata-pipeline -- bash
+
+# Install dependencies (first time)
+pip install kafka-python pyspark
+apt-get update
+apt-get install -y openjdk-21-jdk
+export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+export PATH=\$PATH:\$JAVA_HOME/bin
+java -version
+
+# Copy python files and data
+kubectl cp consumer/consumer.py bigdata-pipeline/python-consumer:/tmp/consumer.py
+
+# Run
+kubectl exec -n bigdata-pipeline python-consumer -- sed -i "s/'auto_offset_reset': 'latest'/'auto_offset_reset': 'earliest'/" /tmp/consumer.py
