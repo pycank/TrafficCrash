@@ -243,6 +243,7 @@ metadata:
   name: cassandra
   namespace: bigdata-pipeline
 spec:
+  clusterIP: None
   selector:
     app: cassandra
   ports:
@@ -271,7 +272,7 @@ spec:
           image: cassandra:latest
           env:
             - name: CASSANDRA_SEEDS
-              value: cassandra
+              value: cassandra-0.cassandra.bigdata-pipeline.svc.cluster.local
           ports:
             - containerPort: 9042
           volumeMounts:

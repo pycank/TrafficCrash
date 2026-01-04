@@ -8,7 +8,7 @@ from cassandra.query import SimpleStatement
 
 BOOTSTRAP = os.getenv('BOOTSTRAP_SERVERS', 'kafka-1:9092,kafka-2:9093,kafka-3:9094')
 KAFKA_TOPIC = os.getenv('KAFKA_TOPIC', 'TrafficAccident')
-CASSANDRA_HOST = os.getenv('CASSANDRA_HOST', '127.0.0.1')
+CASSANDRA_HOST = os.getenv('CASSANDRA_HOST', 'cassandra-0.cassandra.bigdata-pipeline.svc.cluster.local')
 CASSANDRA_KEYSPACE = os.getenv('CASSANDRA_KEYSPACE', 'traffic')
 
 spark = SparkSession.builder \
