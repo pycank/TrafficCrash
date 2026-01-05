@@ -21,6 +21,13 @@ try:
     print(f"Topic '{kafka_topic}' created successfully")
 except Exception as e:
     print(f"Topic creation error (may already exist): {e}")
+try:
+    topic_details = admin_client.describe_topics([kafka_topic])
+    print(f"Details for topic '{kafka_topic}':")
+    for detail in topic_details:
+        print(detail)
+except Exception as e:
+    print(f"Error {kafka_topic}: {e}")
 
 # Read JSON data from the file
 data_source_path = os.path.join(os.path.dirname(__file__), '2022-09-06.csv')
@@ -30,7 +37,6 @@ csv_data = csv_data.to_dict('records')
 
 # Kafka producer configuration
 producer = KafkaProducer(bootstrap_servers=bootstrap_servers)
-
 # Function to publish an article to Kafka topic
 def send_a_row(row):
     key = str(row["ID"]).encode('utf-8')  # Encode the key to bytes
