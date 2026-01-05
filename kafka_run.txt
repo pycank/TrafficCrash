@@ -1,6 +1,10 @@
 ## Producer
-# To create/access pod
-kubectl run python-producer --rm -it --image=python:3.11-slim --restart=Never -n bigdata-pipeline -- bash
+# To create pod
+kubectl run python-producer -it --image=python:3.11-slim --restart=Never -n bigdata-pipeline -- bash
+
+# To access pod
+kubectl exec -it python-producer -n bigdata-pipeline -- bash
+
 
 # Install dependencies (first time)
 pip install kafka-python pandas
@@ -14,8 +18,11 @@ kubectl cp producer/2022-09-06.csv bigdata-pipeline/producer-runner:/tmp/2022-09
 python /tmp/producer.py
 
 ## Consumer
-# To create/access pod
+# To create pod
 kubectl run python-consumer --rm -it --image=python:3.11-slim --restart=Never -n bigdata-pipeline -- bash
+
+# To access pod
+kubectl exec -it python-consumer -n bigdata-pipeline -- bash
 
 # Install dependencies (first time)
 pip install kafka-python pyspark
@@ -25,7 +32,7 @@ export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
 export PATH=\$PATH:\$JAVA_HOME/bin
 java -version
 
-# Copy python files and data
+# Copy python files
 kubectl cp consumer/consumer.py bigdata-pipeline/python-consumer:/tmp/consumer.py
 
 # Run
