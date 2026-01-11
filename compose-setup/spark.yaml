@@ -35,8 +35,12 @@ spec:
               value: "no"
             - name: SPARK_USER
               value: "spark"
+            - name: SPARK_MASTER_HOST
+              value: "spark-master"
             - name: CORE_CONF_fs_defaultFS
               value: "hdfs://namenode:9000"
+            - name: PYSPARK_PYTHON
+              value: "/usr/bin/python3"
           resources:
             requests:
               memory: "1Gi"
@@ -107,9 +111,11 @@ spec:
             - name: SPARK_MASTER_URL
               value: "spark://spark-master:7077"
             - name: SPARK_WORKER_MEMORY
-              value: "2g"
+              value: "3g"
             - name: SPARK_WORKER_CORES
               value: "2"
+            - name: SPARK_DRIVER_MEMORY
+              value: "3g"
             - name: SPARK_RPC_AUTHENTICATION_ENABLED
               value: "no"
             - name: SPARK_RPC_ENCRYPTION_ENABLED
@@ -122,12 +128,14 @@ spec:
               value: "spark"
             - name: CORE_CONF_fs_defaultFS
               value: "hdfs://namenode:9000"
+            - name: PYSPARK_PYTHON
+              value: "/usr/bin/python3"
           resources:
             requests:
-              memory: "2Gi"
+              memory: "3Gi"
               cpu: "500m"
             limits:
-              memory: "3Gi"
+              memory: "4Gi"
               cpu: "1000m"
           livenessProbe:
             tcpSocket:
