@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: namenode
+  name: hdfs-namenode
   namespace: bigdata-pipeline
 spec:
-  serviceName: namenode
+  serviceName: hdfs-namenode
   replicas: 1
   selector:
     matchLabels:
-      app: namenode
+      app: hdfs-namenode
   template:
     metadata:
       labels:
-        app: namenode
+        app: hdfs-namenode
     spec:
       containers:
         - name: namenode
@@ -24,9 +24,9 @@ spec:
               name: rpc
           env:
             - name: CLUSTER_NAME
-              value: "test"
+              value: "test-cluster"
             - name: CORE_CONF_fs_defaultFS
-              value: "hdfs://namenode:9000"
+              value: "hdfs://hdfs-namenode:9000"
             - name: CORE_CONF_hadoop_http_staticuser_user
               value: "root"
             - name: HDFS_CONF_dfs_webhdfs_enabled
@@ -35,25 +35,34 @@ spec:
               value: "false"
             - name: HDFS_CONF_dfs_namenode_datanode_registration_ip___hostname___check
               value: "false"
+          
+          # Gắn ổ cứng để lưu Metadata
+          volumeMounts:
+            - name: namenode-data
+              mountPath: /hadoop/dfs/name
+
           resources:
             requests:
               memory: "512Mi"
               cpu: "100m"
             limits:
-              memory: "2Gi"
+              memory: "1Gi" # Giảm xuống 1Gi cho nhẹ máy local
               cpu: "1000m"
+          
+          # Giữ nguyên Probe để K8s biết khi nào HDFS sẵn sàng
           livenessProbe:
             httpGet:
               path: /
               port: 9870
             initialDelaySeconds: 60
-            periodSeconds: 10
+            periodSeconds: 20
           readinessProbe:
             httpGet:
               path: /
               port: 9870
             initialDelaySeconds: 30
-            periodSeconds: 5
+            periodSeconds: 10
+
   volumeClaimTemplates:
     - metadata:
         name: namenode-data
@@ -62,16 +71,17 @@ spec:
         resources:
           requests:
             storage: 5Gi
+
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: namenode
+  name: hdfs-namenode # Tên này phải khớp với config trong DataNode
   namespace: bigdata-pipeline
 spec:
   type: ClusterIP
   selector:
-    app: namenode
+    app: hdfs-namenode
   ports:
     - port: 9870
       targetPort: 9870

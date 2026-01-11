@@ -1,0 +1,132 @@
+# --- SPARK MASTER SERVICE ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spark-master
+  namespace: bigdata-pipeline
+spec:
+  type: ClusterIP
+  ports:
+    - port: 7077
+      targetPort: 7077
+      name: master
+    - port: 8080
+      targetPort: 8080
+      name: webui
+  selector:
+    app: spark-master
+
+---
+# --- SPARK MASTER STATEFULSET ---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: spark-master
+  namespace: bigdata-pipeline
+spec:
+  serviceName: spark-master
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spark-master
+  template:
+    metadata:
+      labels:
+        app: spark-master
+    spec:
+      containers:
+        - name: spark-master
+          image: bitnamilegacy/spark:3.5.0 
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 7077
+            - containerPort: 8080
+          env:
+            - name: SPARK_MODE
+              value: "master"
+            - name: CORE_CONF_fs_defaultFS
+              value: "hdfs://hdfs-namenode:9000"
+            - name: SPARK_RPC_AUTHENTICATION_ENABLED
+              value: "no"
+            - name: SPARK_RPC_ENCRYPTION_ENABLED
+              value: "no"
+            - name: SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED
+              value: "no"
+            - name: SPARK_SSL_ENABLED
+              value: "no"
+          # mount ổ cứng
+          volumeMounts:
+            - name: spark-master-data
+              mountPath: /opt/bitnami/spark/work
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+  volumeClaimTemplates:
+    - metadata:
+        name: spark-master-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 2Gi # Giảm xuống 2GB là đủ cho log
+
+---
+# --- SPARK WORKER DEPLOYMENT ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-worker
+  namespace: bigdata-pipeline
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: spark-worker
+  template:
+    metadata:
+      labels:
+        app: spark-worker
+    spec:
+      containers:
+        - name: spark-worker
+          image: bitnamilegacy/spark:3.5.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8081
+              name: webui
+          env:
+            - name: SPARK_MODE
+              value: "worker"
+            - name: SPARK_MASTER_URL
+              value: "spark://spark-master:7077"
+            
+            # Cấu hìnhphù hợp cho máy Local
+            - name: SPARK_WORKER_MEMORY
+              value: "512m"
+            - name: SPARK_WORKER_CORES
+              value: "1"
+            - name: SPARK_DRIVER_MEMORY
+              value: "1g"
+            
+            - name: CORE_CONF_fs_defaultFS
+              value: "hdfs://hdfs-namenode:9000"
+              
+            - name: SPARK_RPC_AUTHENTICATION_ENABLED
+              value: "no"
+            - name: SPARK_RPC_ENCRYPTION_ENABLED
+              value: "no"
+            - name: SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED
+              value: "no"
+            - name: SPARK_SSL_ENABLED
+              value: "no"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi" 
+              cpu: "1000m"

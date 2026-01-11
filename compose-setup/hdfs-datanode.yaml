@@ -1,34 +1,46 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: datanode
+  name: hdfs-datanode
   namespace: bigdata-pipeline
 spec:
-  serviceName: datanode
-  replicas: 3
+  serviceName: hdfs-datanode
+  replicas: 2 # <---  Để 1 node chạy test trước, máy khỏe thì sửa thành 2, 3
   selector:
     matchLabels:
-      app: datanode
+      app: hdfs-datanode
   template:
     metadata:
       labels:
-        app: datanode
+        app: hdfs-datanode
     spec:
       containers:
         - name: datanode
           image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
           env:
+            # SỬA 1: Trỏ đúng vào Service của Namenode (giả sử tên service là hdfs-namenode)
             - name: SERVICE_PRECONDITION
-              value: "namenode:9870"
+              value: "hdfs-namenode:9870"
             - name: CORE_CONF_fs_defaultFS
-              value: "hdfs://namenode:9000"
+              value: "hdfs://hdfs-namenode:9000"
+            
+            # Cấu hình chuẩn cho permission
             - name: HDFS_CONF_dfs_permissions_enabled
               value: "false"
             - name: HDFS_CONF_dfs_namenode_datanode_registration_ip___hostname___check
               value: "false"
+            
+            # Bổ sung: Giúp tránh lỗi permission khi mount volume trên local
+            - name: HDFS_CONF_dfs_datanode_data_dir_perm
+              value: "700" 
+          #gắn ổ cứng vào Container
+          volumeMounts:
+            - name: datanode-data
+              mountPath: /hadoop/dfs/data
+
           resources:
             requests:
-              memory: "128Mi"
+              memory: "256Mi" # Tăng nhẹ request để khởi động ổn định hơn
               cpu: "50m"
             limits:
               memory: "1Gi"
@@ -50,18 +62,18 @@ spec:
         accessModes: ["ReadWriteOnce"]
         resources:
           requests:
-            storage: 2Gi
+            storage: 5Gi # Tăng lên 5GB để thoải mái test data
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: datanode
+  name: hdfs-datanode
   namespace: bigdata-pipeline
 spec:
   type: ClusterIP
-  clusterIP: None
+  clusterIP: None # Headless service cho StatefulSet
   selector:
-    app: datanode
+    app: hdfs-datanode
   ports:
     - port: 9864
       targetPort: 9864
