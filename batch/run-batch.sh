@@ -25,7 +25,7 @@ kubectl wait --for=condition=Ready pod/$POD_NAME -n $NAMESPACE --timeout=60s
 
 # Step 2: Install Python dependencies
 echo "[3/4] Installing Python dependencies..."
-kubectl exec -n $NAMESPACE $POD_NAME -- pip install hdfs3 pyhdfs --quiet
+kubectl exec -n $NAMESPACE $POD_NAME -- pip install hdfs3 pyhdfs cassandra-driver --quiet
 
 # Step 3: Copy batch script to pod
 echo "[4/4] Copying batch script to pod..."
