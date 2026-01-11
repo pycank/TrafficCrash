@@ -22,6 +22,9 @@ kubectl exec -n bigdata-pipeline $NAMENODE_POD -- hdfs dfs -mkdir -p /user/pdt/r
 echo "Creating /user/pdt/processed directory..."
 kubectl exec -n bigdata-pipeline $NAMENODE_POD -- hdfs dfs -mkdir -p /user/pdt/processed
 
+echo "Creating /user/pdt/news directory..."
+kubectl exec -n bigdata-pipeline $NAMENODE_POD -- hdfs dfs -mkdir -p /user/pdt/news
+
 # Kiểm tra kết quả
 echo "Listing HDFS directories:"
 kubectl exec -n bigdata-pipeline $NAMENODE_POD -- hdfs dfs -ls /

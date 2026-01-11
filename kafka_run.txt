@@ -5,10 +5,8 @@ kubectl run python-producer -it --image=python:3.11-slim --restart=Never -n bigd
 # To access pod
 kubectl exec -it python-producer -n bigdata-pipeline -- bash
 
-
 # Install dependencies (first time)
 pip install kafka-python pandas
-
 
 # Copy python files and data
 kubectl cp producer/producer.py bigdata-pipeline/producer-runner:/tmp/producer.py
@@ -24,7 +22,7 @@ kubectl run python-consumer --rm -it --image=python:3.11-slim --restart=Never -n
 # To access pod
 kubectl exec -it python-consumer -n bigdata-pipeline -- bash
 
-# Install dependencies (first time)
+# Install dependencies
 pip install kafka-python pyspark
 apt-get update
 apt-get install -y openjdk-21-jdk
