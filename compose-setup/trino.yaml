@@ -1,0 +1,109 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trino-config
+  namespace: bigdata-pipeline
+data:
+  # 1. Cấu hình Node
+  node.properties: |
+    node.environment=production
+    node.id=ffffffff-ffff-ffff-ffff-ffffffffffff
+    node.data-dir=/data/trino
+
+  # 2. Cấu hình JVM (Giới hạn RAM để không sập máy local)
+  jvm.config: |
+    -server
+    -Xmx512M
+    -XX:+UseG1GC
+    -XX:G1HeapRegionSize=32M
+    -XX:+UseGCOverheadLimit
+    -XX:+ExplicitGCInvokesConcurrent
+    -XX:+HeapDumpOnOutOfMemoryError
+    -XX:OnOutOfMemoryError=kill -9 %p
+
+  # 3. Cấu hình Server (Coordinator + Worker chung 1 node)
+  config.properties: |
+    coordinator=true
+    node-scheduler.include-coordinator=true
+    http-server.http.port=8080
+    query.max-memory=1GB
+    query.max-memory-per-node=512MB
+    discovery.uri=http://localhost:8080
+
+  # Kết nối Cassandra
+  # Lưu ý: 'contact-points' trỏ tới Service Cassandra đúng tên
+  cassandra.properties: |
+    connector.name=cassandra
+    cassandra.contact-points=cassandra
+    cassandra.load-policy.use-dc-aware=true
+    cassandra.load-policy.dc-aware.local-dc=DC1
+    cassandra.native-protocol-port=9042
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trino
+  namespace: bigdata-pipeline
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trino
+  template:
+    metadata:
+      labels:
+        app: trino
+    spec:
+      containers:
+        - name: trino
+          image: trinodb/trino:latest # Nên dùng bản mới để hỗ trợ Cassandra tốt hơn
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            # Mount các file cấu hình vào đúng chỗ
+            - name: config-volume
+              mountPath: /etc/trino/node.properties
+              subPath: node.properties
+            - name: config-volume
+              mountPath: /etc/trino/jvm.config
+              subPath: jvm.config
+            - name: config-volume
+              mountPath: /etc/trino/config.properties
+              subPath: config.properties
+            # Mount Catalog (File kết nối Cassandra)
+            - name: config-volume
+              mountPath: /etc/trino/catalog/cassandra.properties
+              subPath: cassandra.properties
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /v1/info
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+      volumes:
+        - name: config-volume
+          configMap:
+            name: trino-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trino
+  namespace: bigdata-pipeline
+spec:
+  type: ClusterIP
+  selector:
+    app: trino
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: http
