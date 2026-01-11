@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-streaming
+  namespace: bigdata-pipeline
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spark-streaming
+  template:
+    metadata:
+      labels:
+        app: spark-streaming
+    spec:
+      restartPolicy: Always
+      containers:
+      - name: spark-processor
+        image: minhvn1433/speed-layer:latest
+        imagePullPolicy: Always
+        env:
+          - name: BOOTSTRAP_SERVERS
+            value: "kafka-1:9092,kafka-2:9093,kafka-3:9094"
+          - name: CASSANDRA_HOST
+            value: "cassandra.bigdata-pipeline.svc.cluster.local"
+          - name: KAFKA_TOPIC
+            value: "TrafficAccident"
+          - name: CASSANDRA_KEYSPACE
+            value: "traffic"
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
