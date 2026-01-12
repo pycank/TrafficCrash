@@ -26,8 +26,8 @@ data:
     coordinator=true
     node-scheduler.include-coordinator=true
     http-server.http.port=8080
-    query.max-memory=1GB
-    query.max-memory-per-node=512MB
+    query.max-memory=512MB
+    query.max-memory-per-node=256MB
     discovery.uri=http://localhost:8080
 
   # Kết nối Cassandra
@@ -35,9 +35,9 @@ data:
   cassandra.properties: |
     connector.name=cassandra
     cassandra.contact-points=cassandra
-    cassandra.load-policy.use-dc-aware=true
-    cassandra.load-policy.dc-aware.local-dc=DC1
     cassandra.native-protocol-port=9042
+    cassandra.load-policy.use-dc-aware=true
+    cassandra.load-policy.dc-aware.local-dc=datacenter1
 
 ---
 apiVersion: apps/v1
