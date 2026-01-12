@@ -16,6 +16,14 @@ spec:
       containers:
         - name: superset
           image: apache/superset:3.1.0
+          
+          # 1. Cài đặt thư viện TRƯỚC khi chạy Server
+          command: ["/bin/sh", "-c"]
+          args:
+            - >-
+              pip install --no-cache-dir sqlalchemy-trino &&
+              /usr/bin/run-server.sh
+
           ports:
             - containerPort: 8088
           env:
@@ -23,18 +31,24 @@ spec:
               value: "B1gD4t4Pip3lin3-S3cr3t-K3y"
             - name: SUPERSET_PORT
               value: "8088"
+            
+            # --- QUAN TRỌNG NHẤT: THÊM DÒNG NÀY ---
+            # Chỉ định chính xác đường dẫn mà bạn thấy trong log
+            - name: PYTHONPATH
+              value: "/app/pythonpath:/app/superset_home/.local/lib/python3.9/site-packages"
+            # --------------------------------------
+
           resources:
             requests:
               memory: "512Mi"
-              cpu: "500m"
             limits:
-              memory: "1Gi" 
-              cpu: "1000m"  
+              memory: "2Gi"
+          
           livenessProbe:
             httpGet:
               path: /health
               port: 8088
-            initialDelaySeconds: 180  # Chờ 3 phút cho Superset khởi động
+            initialDelaySeconds: 180
             periodSeconds: 20
             timeoutSeconds: 15
             failureThreshold: 5
